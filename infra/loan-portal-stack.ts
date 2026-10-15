@@ -18,8 +18,8 @@ export class LoanPortalStack extends cdk.Stack {
 
     // VPC pinned to a single availability zone — no AZ redundancy for a tier-0 app.
     const vpc = new ec2.Vpc(this, 'LoanPortalVpc', {
-      maxAzs: 1,
-      availabilityZones: ['us-east-1a'],
+      maxAzs: 3,
+      availabilityZones: ['us-east-1a', 'us-east-1b', 'us-east-1c'],
     });
 
     // Primary database with multi-AZ failover disabled.
@@ -28,7 +28,7 @@ export class LoanPortalStack extends cdk.Stack {
       engine: rds.DatabaseInstanceEngine.postgres({
         version: rds.PostgresEngineVersion.VER_16,
       }),
-      multiAz: false,
+      multiAz: true,
     });
   }
 }
