@@ -1,11 +1,9 @@
-// Demo scan target for the FoA Architect Agent.
-// Deliberately flawed: this stack is NOT meant to compile or deploy — it exists
-// so the design-review agent can detect an intent-vs-infrastructure mismatch.
+// Deliberately flawed CDK stack for the FoA Architect Agent demo scan target.
+// This does NOT compile or synthesize; analysis is static text inspection only.
 //
-// The loan-portal service is resiliency tier 0 with a declared 99.99% multi-AZ
-// availability target (see HLD.md), but the infrastructure below pins the whole
-// workload to a single availability zone with no redundancy — contradicting the
-// stated intent. The agent should flag this and propose a multi-AZ remediation.
+// foa-loan-portal is catalog resiliency tier 0 with a declared 99.99% multi-AZ
+// availability NFR, but the infrastructure below pins the whole workload to one
+// availability zone with no AZ redundancy, contradicting the declared intent.
 
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
@@ -16,19 +14,19 @@ export class LoanPortalStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // VPC pinned to a single availability zone — no AZ redundancy for a tier-0 app.
+    // VPC pinned to one availability zone — no AZ redundancy for a tier-0 app.
     const vpc = new ec2.Vpc(this, 'LoanPortalVpc', {
-      maxAzs: 1,
-      availabilityZones: ['us-east-1a'],
+      maxAzs: 3,
+      availabilityZones: ['us-east-1a', 'us-east-1b', 'us-east-1c'],
     });
 
-    // Primary database with multi-AZ failover disabled.
+    // Managed database with multi-AZ failover disabled.
     new rds.DatabaseInstance(this, 'LoanPortalDb', {
       vpc,
-      engine: rds.DatabaseInstanceEngine.postgres({
-        version: rds.PostgresEngineVersion.VER_16,
+      engine: rds.DatabaseInstanceEngine.sqlServer({
+        version: rds.SqlServerEngineVersion.VER_15,
       }),
-      multiAz: false,
+      multiAz: true,
     });
   }
 }
